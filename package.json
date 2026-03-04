@@ -9,10 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.98.0",
     "next": "latest",
+    "papaparse": "^5.4.1",
     "react": "latest",
-    "react-dom": "latest",
-    "papaparse": "^5.4.1"
+    "react-dom": "latest"
   },
   "devDependencies": {
     "eslint": "latest",
