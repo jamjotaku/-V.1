@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 
+// あなたのスプレッドシートURLを維持しています
 const MASTER_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSAruZ3gKMni3ipy08kB8iVkpwlUTlpOro_TvCO4ilZaDeUvdlwVEqYqcsLtbSu5gV0ZhqeRJhDSY0-/pub?output=csv";
 
 export default function Tracker() {
@@ -49,7 +50,7 @@ export default function Tracker() {
   const addPart = () => {
     if (!selectedItem) return;
     const id = selectedItem.Master_ID;
-    const partName = prompt("パーツ名を入力してください (例: ウィッグ, 靴)");
+    const partName = prompt("制作パーツ名を入力してください (例: ウィッグ, 武器, ジャケット)");
     if (!partName) return;
 
     const currentParts = userProgress[id]?.parts || [];
@@ -76,12 +77,12 @@ export default function Tracker() {
   // ズームリセット
   useEffect(() => { setZoom(1); setOffset({ x: 0, y: 0 }); }, [selectedItem]);
 
-  // 画像操作ロジック (省略せず保持)
+  // 画像操作ロジック
   const handleWheel = (e) => { e.preventDefault(); const delta = e.deltaY > 0 ? -0.1 : 0.1; setZoom(prev => Math.min(Math.max(prev + delta, 0.5), 5)); };
   const handleMouseDown = (e) => { setIsDragging(true); setStartPos({ x: e.clientX - offset.x, y: e.clientY - offset.y }); };
   const handleMouseMove = (e) => { if (!isDragging) return; setOffset({ x: e.clientX - startPos.x, y: e.clientY - startPos.y }); };
 
-  if (loading) return <div className="loading">LOADING DATA...</div>;
+  if (loading) return <div className="loading">LOADING...</div>;
 
   const currentParts = selectedItem ? (userProgress[selectedItem.Master_ID]?.parts || []) : [];
   const totalProgress = currentParts.length > 0 
@@ -90,7 +91,7 @@ export default function Tracker() {
 
   return (
     <div className="tracker-root" onMouseUp={() => setIsDragging(false)}>
-      <Head><title>Vspo! Cosplay Tracker</title></Head>
+      <Head><title>Vspo! Tracker v2</title></Head>
 
       <aside className="sidebar">
         <div className="sidebar-header">CHARA MASTER</div>
@@ -118,7 +119,7 @@ export default function Tracker() {
 
       <aside className="progress-panel">
         <div className="panel-header">
-          <span>PROGRESS</span>
+          <span>PROGRESS TRACKER</span>
           <span className="total-badge">{totalProgress}%</span>
         </div>
         
@@ -130,6 +131,7 @@ export default function Tracker() {
           <button className="add-btn" onClick={addPart}>+ PART ADD</button>
           
           <div className="parts-list">
+            {currentParts.length === 0 && <p className="empty-msg">パーツが未登録です</p>}
             {currentParts.map((part, idx) => (
               <div key={idx} className="part-card">
                 <div className="part-info">
@@ -147,24 +149,29 @@ export default function Tracker() {
       <style jsx global>{`
         body { margin: 0; background: #0a0a0c; color: #eee; font-family: 'Inter', sans-serif; overflow: hidden; }
         .tracker-root { display: flex; height: 100vh; width: 100vw; }
-        .sidebar { width: 240px; background: #121214; border-right: 1px solid #222; }
-        .sidebar-header { padding: 20px; font-weight: bold; color: #00f2ff; border-bottom: 1px solid #222; }
+        .sidebar { width: 240px; background: #121214; border-right: 1px solid #222; flex-shrink: 0; }
+        .sidebar-header { padding: 20px; font-weight: bold; color: #00f2ff; border-bottom: 1px solid #222; font-size: 14px; }
         .item-list { padding: 10px; }
         .costume-item { padding: 12px; border-radius: 6px; margin-bottom: 5px; cursor: pointer; border: 1px solid transparent; }
-        .costume-item.active { background: #1a1a1d; border-color: #00f2ff; }
-        .viewer-area { flex: 1; display: flex; flex-direction: column; background: #000; position: relative; overflow: hidden; }
-        .image-stage { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .ref-image { max-width: 80%; height: auto; }
+        .costume-item.active { background: #1a1a1d; border-color: #00f2ff; box-shadow: 0 0 10px rgba(0,242,255,0.1); }
+        .mem-name { font-size: 13px; font-weight: bold; }
+        .cos-type { font-size: 11px; color: #888; }
 
-        /* 進捗パネル */
-        .progress-panel { width: 320px; background: #121214; border-left: 1px solid #222; display: flex; flex-direction: column; }
-        .panel-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #ff00ff; }
-        .total-badge { background: #ff00ff; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-        .total-bar-container { width: 100%; height: 4px; background: #222; position: relative; }
-        .total-bar-fill { height: 100%; background: #ff00ff; transition: 0.3s; box-shadow: 0 0 10px #ff00ff; }
+        .viewer-area { flex: 1; display: flex; flex-direction: column; background: #000; position: relative; overflow: hidden; }
+        .info-bar { padding: 12px 20px; background: rgba(20,20,25,0.9); z-index: 10; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+        .info-bar h2 { font-size: 16px; margin: 0; }
+        .controls-hint { font-size: 10px; color: #555; }
+        .image-stage { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .ref-image { max-width: 90%; height: auto; transition: transform 0.05s linear; }
+
+        .progress-panel { width: 320px; background: #121214; border-left: 1px solid #222; display: flex; flex-direction: column; flex-shrink: 0; }
+        .panel-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #ff00ff; font-size: 14px; }
+        .total-badge { background: #ff00ff; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+        .total-bar-container { width: 100%; height: 4px; background: #222; }
+        .total-bar-fill { height: 100%; background: #ff00ff; transition: 0.3s; box-shadow: 0 0 8px #ff00ff; }
         
         .progress-content { flex: 1; overflow-y: auto; padding: 20px; }
-        .add-btn { width: 100%; padding: 10px; background: none; border: 1px dashed #444; color: #888; border-radius: 6px; cursor: pointer; margin-bottom: 20px; transition: 0.2s; }
+        .add-btn { width: 100%; padding: 10px; background: #1a1a1d; border: 1px dashed #444; color: #888; border-radius: 6px; cursor: pointer; margin-bottom: 20px; transition: 0.2s; font-size: 12px; }
         .add-btn:hover { border-color: #00f2ff; color: #00f2ff; }
         
         .part-card { background: #1a1a1d; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #333; }
@@ -173,6 +180,7 @@ export default function Tracker() {
         .part-percent { font-size: 13px; color: #00f2ff; }
         .del-mini { background: none; border: none; color: #444; cursor: pointer; font-size: 18px; }
         .del-mini:hover { color: #ff4444; }
+        .empty-msg { text-align: center; color: #444; font-size: 12px; margin-top: 50px; }
         
         .p-slider { width: 100%; cursor: pointer; accent-color: #00f2ff; }
         .loading { display: flex; height: 100vh; align-items: center; justify-content: center; background: #000; color: #00f2ff; }
